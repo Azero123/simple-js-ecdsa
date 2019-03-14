@@ -1,0 +1,31 @@
+{
+  "name": "simple-js-ecdsa",
+  "version": "1.0.0",
+  "description": "easy and light weight ecdsa implementation",
+  "main": "./src/index.js",
+  "scripts": {
+    "test": "node ./test/index.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Azero123/simple-js-ecdsa.git"
+  },
+  "keywords": [
+    "bitcoin",
+    "ecdsa",
+    "elliptic",
+    "cryptography",
+    "signature",
+    "ec"
+  ],
+  "author": "Azero123",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/Azero123/simple-js-ecdsa/issues"
+  },
+  "homepage": "https://github.com/Azero123/simple-js-ecdsa#readme",
+  "dependencies": {
+    "bs58": "^4.0.1",
+    "simple-js-ec-math": "^1.0.2"
+  }
+}
