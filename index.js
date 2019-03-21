@@ -1,7 +1,31 @@
 const bigInt = require('big-integer')
 const base58 = require('bs58')
 const crypto = require('crypto')
-const secp256k1 = require('./secp256k1.js')
+const elliptic = require('simple-js-ec-math')
+const ModPoint = elliptic.ModPoint
+const Curve = elliptic.Curve
+
+const g = new ModPoint(
+  bigInt('79BE667EF9DCBBAC55A06295CE870B07029BFCDB2DCE28D959F2815B16F81798', 16),
+  bigInt('483ADA7726A3C4655DA4FBFC0E1108A8FD17B448A68554199C47D08FFB10D4B8', 16)
+)
+const secp256k1 = new Curve(
+  bigInt('0'),
+  bigInt('7'),
+  bigInt('FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364141', 16),
+  bigInt('2').pow('256').minus(bigInt('2').pow('32')).minus('977'),
+  g,
+)
+
+class ECDSA {
+  constructor(curve = secp256k1) {
+    // http://www.secg.org/sec2-v2.pdf
+    this.curve = curve
+  }
+  newKey() {
+    return Wallet.from(bigInt.fromArray([...crypto.randomBytes(64)]).toString(16), curve)
+  }
+}
 
 let hex = { '0': 0, '1': 1, '2': 2, '3': 3, '4': 4, '5': 5, '6': 6, '7': 7, '8': 8, '9': 9, a: 10, b: 11, c: 12, d: 13, e: 14, f: 15 }
 
@@ -22,9 +46,6 @@ const binSha256 = data => sha256(hexStringToBinaryString(data))
 const binRipemd160 = data => ripemd160(data)
 
 class Wallet {
-  static new(curve = secp256k1) {
-    return Wallet.fromKey(curve.modSet.random(), curve)
-  }
   static fromKey(key, curve = secp256k1) {
     const wallet = new Wallet()
     wallet.curve = curve
@@ -41,62 +62,17 @@ class Wallet {
     }
     return wallet
   }
-  sign(message, k = this.curve.modSet.random()) {
-    k = bigInt(k, 16)
-    const e = bigInt(sha256(message), 16)
-    
-    const da = bigInt(this.key, 16) // private key
-
-    const r = this.curve.multiply(this.curve.g, k)
-
-    const s1 = da.multiply(r.x).add(e)
-    const s = s1.multiply(k.modInv(this.curve.n)).mod(this.curve.n)
-
-    return {
-      r: bigInt(r.x).toString(16),
-      s: s.toString(16)
-    }
+  sign(message) {
+      bigInt(sha256(message), 16)
+    // https://eprint.iacr.org/2017/552.pdf
+    // https://8gwifi.org/ecsignverify.jsp
+    // https://crypto.stackexchange.com/questions/42104/can-you-help-me-understand-this-toy-example-of-ecdsa-signing-and-verification
   }
-
-  bip66Sign(signature) {
-    const r = new Buffer(signature.r, 'hex')
-    const s = new Buffer(signature.s, 'hex')
-    const rl = r.length
-    const sl = s.length
-    var signature = Buffer.allocUnsafe(6 + rl + sl)
-    signature[0] = 0x30
-    signature[1] = signature.length - 2
-    signature[2] = 0x02
-    signature[3] = rl
-    r.copy(signature, 4)
-    signature[4+rl] = 0x02
-    signature[5+rl] = sl
-    S.copy(signature, rl + 6)
-    return signature.toString('hex')
-  }
-
   verify(message, signature) {
-    const e = bigInt(sha256(message), 16)
-    const r = bigInt(signature.r, 16)
-    const s = bigInt(signature.s, 16)
-    const w = bigInt(s).modInv(this.curve.n)
-    const u1 = bigInt(e).multiply(w).mod(this.curve.n)
-    const u2 = r.multiply(w).mod(this.curve.n)
-    const p = this.curve.add(this.curve.multiply(this.curve.g, u1), this.curve.multiply(this.publicPoint, u2))
-    return p.x == r
+    // https://eprint.iacr.org/2017/552.pdf
+    // https://8gwifi.org/ecsignverify.jsp
+    // https://crypto.stackexchange.com/questions/42104/can-you-help-me-understand-this-toy-example-of-ecdsa-signing-and-verification
   }
-
-  verifyBip66(message, signature) {
-    const e = bigInt(sha256(message), 16)
-    const r = bigInt(signature.r, 16)
-    const s = bigInt(signature.s, 16)
-    const w = bigInt(s).modInv(this.curve.n)
-    const u1 = bigInt(e).multiply(w).mod(this.curve.n)
-    const u2 = r.multiply(w).mod(this.curve.n)
-    const p = this.curve.add(this.curve.multiply(this.curve.g, u1), this.curve.multiply(this.publicPoint, u2))
-    return p.x == r
-  }
-  
   static fromAddress(address, curve = secp256k1) {
     const wallet = new Wallet()
     wallet.curve = curve
@@ -111,31 +87,31 @@ class Wallet {
     const checksum = binSha256(binSha256(formatted)).substr(0, 8)
     return this._wif = base58.encode(Buffer.from(`${formatted}${checksum}`, 'hex'))
   }
-  get publicPoint() {
-    if (this._publicPoint) {
-      return this._publicPoint
+  get pubPoint() {
+    if (this._pubPoint) {
+      return this._pubPoint
     }
-    return this._publicPoint = this.curve.multiply(this.curve.g, bigInt(this.key, 16))
+    return this._pubPoint = this.curve.multiply(this.curve.g, bigInt(this.key, 16))
   }
   get sec1Compressed() {
     if (this._sec1Compressed) {
       return this._sec1Compressed
     }
-    let xStr = bigInt(this.publicPoint.x).toString(16)
+    let xStr = bigInt(this.pubPoint.x).toString(16)
     while (xStr.length < 64) {
       xStr = '0' + xStr
     }
-    return this._sec1Compressed = `${bigInt(this.publicPoint.y).isOdd() ? '03' : '02'}${xStr}`
+    return this._sec1Compressed = `${bigInt(this.pubPoint.y).isOdd() ? '03' : '02'}${xStr}`
   }
   get sec1Uncompressed() {
     if (this._sec1Uncompressed) {
       return this._sec1Uncompressed
     }
-    let yStr = bigInt(this.publicPoint.y).toString(16)
+    let yStr = bigInt(this.pubPoint.y).toString(16)
     while (yStr.length < 64) {
       yStr = '0' + yStr
     }
-    let xStr = bigInt(this.publicPoint.x).toString(16)
+    let xStr = bigInt(this.pubPoint.x).toString(16)
     while (xStr.length < 64) {
       xStr = '0' + xStr
     }
@@ -158,4 +134,8 @@ class Wallet {
     return this._compressAddress = base58.encode(Buffer.from(`${formatted}${checksum}`, 'hex'))
   }
 }
-module.exports = Wallet
+
+module.exports = {
+  ECDSA: ECDSA,
+  Wallet: Wallet,
+}

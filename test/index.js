@@ -49,16 +49,55 @@ try {
   }
   for (const private of Object.keys(privateToPublic)) {
     let wallet = Wallet.fromWif(private)
-    console.log('key', wallet.key)
-    console.log('sec1 (compressed)',wallet.sec1Compressed)
-    console.log('sec1 (uncompressed)',wallet.sec1Uncompressed)
-    console.log('wif',wallet.wif)
-    console.log('address',wallet.address)
-    console.log('compressAddress',wallet.compressAddress)
+    // console.log('key', wallet.key)
+    // console.log('sec1 (compressed)',wallet.sec1Compressed)
+    // console.log('sec1 (uncompressed)',wallet.sec1Uncompressed)
+    // console.log('wif',wallet.wif)
+    // console.log('address',wallet.address)
+    // console.log('compressAddress',wallet.compressAddress)
     if (wallet.address !== privateToPublic[private]) {
       throw 'invalid public key generation '+privateToPublic[private]
     }
   }
+
+  ;(() => {
+    let wallet = Wallet.fromKey('82ef796afbce6e67bcb6bc44d922e5d2e664ebe118c0ed5b6ce3b481a638ec90')
+    const signature = wallet.sign('test', '2900c9abe4a9d00b2a4aa6663d8f4989c8cac35f4fe9b2c5b66e07a3903e1c3')
+    if (signature.r.toString(16) !== '85a44b824bda975b15ac77a3256c5d6f21c19b0412eb19333844fc2dbd25dbba') {
+      throw 'invalid signature r value'
+    }
+    // if (signature.s.toString(16) !== '79a1e1e6c94d3cc0388d8659cf7e7fbc6d6e03a1a19446258d19b82071b95c7d') {
+    //   throw 'invalid signature s value'
+    // }
+    if (wallet.verify('test', signature) !== true) {
+      throw 'signing or verification failure'
+    }
+    if (wallet.verify(`${Math.random()}`, signature) !== false) {
+      throw 'falsifiable verification'
+    }
+    if (Wallet.new().verify('test', signature) !== false) {
+      throw 'falsifiable wallet verification'
+    }
+  })()
+
+  let i = 0
+  while (i < 3) {
+    const message = `${Math.random()}`
+    let wallet = Wallet.new()
+    const signature = wallet.sign(message)
+    if (wallet.verify(message, signature) !== true) {
+      throw 'signing or verification failure'
+    }
+    if (wallet.verify(`${Math.random()}`, signature) !== false) {
+      throw 'falsifiable verification'
+    }
+    if (Wallet.new().verify(message, signature) !== false) {
+      throw 'falsifiable wallet verification'
+    }
+    i ++
+  }
+
+
   console.log('✅ wallet tests passed')
 }
 catch (e) {
