@@ -2,7 +2,12 @@
 
 this project is intended as an easy to use ecdsa
 
-opening a wallet using a private key
+creating a new wallet
+```
+let wallet = Wallet.new()
+```
+
+opening an existing wallet using a private key
 ```
 Wallet.fromKey(<private number>)
 ```
@@ -20,6 +25,16 @@ wallet.sec1Uncompressed
 wallet.wif
 wallet.address
 wallet.compressAddress
+```
+
+signing a message
+```
+const signature = wallet.sign(message)
+```
+
+verify a signature
+```
+wallet.verify(message, signature)
 ```
 
 # contribute
