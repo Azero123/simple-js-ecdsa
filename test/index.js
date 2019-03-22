@@ -72,6 +72,12 @@ try {
     if (wallet.verify('test', signature) !== true) {
       throw 'signing or verification failure'
     }
+    if (wallet.verifyBip66('test', wallet.bip66Sign('test')) !== true) {
+      throw 'bip 66 signing or verification failure'
+    }
+    if (wallet.verifyBip66(`${Math.random()}`, wallet.bip66Sign('test')) !== false) {
+      throw 'falsifiable bip 66 wallet verification'
+    }
     if (wallet.verify(`${Math.random()}`, signature) !== false) {
       throw 'falsifiable verification'
     }
@@ -88,13 +94,19 @@ try {
     if (wallet.verify(message, signature) !== true) {
       throw 'signing or verification failure'
     }
+    if (wallet.verifyBip66(message, wallet.bip66Sign(message)) !== true) {
+      throw 'bip 66 signing or verification failure'
+    }
+    if (wallet.verifyBip66(`${Math.random()}`, wallet.bip66Sign(message)) !== false) {
+      throw 'falsifiable bip 66 wallet verification'
+    }
     if (wallet.verify(`${Math.random()}`, signature) !== false) {
       throw 'falsifiable verification'
     }
     if (Wallet.new().verify(message, signature) !== false) {
       throw 'falsifiable wallet verification'
     }
-    i ++
+    i++
   }
 
 

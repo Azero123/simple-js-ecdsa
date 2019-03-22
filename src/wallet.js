@@ -58,12 +58,13 @@ class Wallet {
     }
   }
 
-  bip66Sign(signature) {
-    const r = new Buffer(signature.r, 'hex')
-    const s = new Buffer(signature.s, 'hex')
+  bip66Sign(message, k = this.curve.modSet.random()) {
+    let signature = this.sign(message, k)
+    const r = Buffer.from(signature.r, 'hex')
+    const s = Buffer.from(signature.s, 'hex')
     const rl = r.length
     const sl = s.length
-    var signature = Buffer.allocUnsafe(6 + rl + sl)
+    signature = Buffer.allocUnsafe(6 + rl + sl)
     signature[0] = 0x30
     signature[1] = signature.length - 2
     signature[2] = 0x02
@@ -71,7 +72,7 @@ class Wallet {
     r.copy(signature, 4)
     signature[4+rl] = 0x02
     signature[5+rl] = sl
-    S.copy(signature, rl + 6)
+    s.copy(signature, rl + 6)
     return signature.toString('hex')
   }
 
@@ -87,14 +88,13 @@ class Wallet {
   }
 
   verifyBip66(message, signature) {
-    const e = bigInt(sha256(message), 16)
-    const r = bigInt(signature.r, 16)
-    const s = bigInt(signature.s, 16)
-    const w = bigInt(s).modInv(this.curve.n)
-    const u1 = bigInt(e).multiply(w).mod(this.curve.n)
-    const u2 = r.multiply(w).mod(this.curve.n)
-    const p = this.curve.add(this.curve.multiply(this.curve.g, u1), this.curve.multiply(this.publicPoint, u2))
-    return p.x == r
+    signature = Buffer.from(signature, 'hex')
+    const lr = signature[3]
+
+    return this.verify(message, {
+      r: signature.slice(4, 4 + lr).toString('hex'),
+      s: signature.slice(6 + lr).toString('hex')
+    })
   }
   
   static fromAddress(address, curve = secp256k1) {

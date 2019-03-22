@@ -37,6 +37,16 @@ verify a signature
 wallet.verify(message, signature)
 ```
 
+signing in bip66 format
+```
+const signature = wallet.bip66Sign(message)
+```
+
+verify bip66 signature
+```
+wallet.verifyBip66(message, signature)
+```
+
 # contribute
 
 bitcoin address: 1KKiniL7QnMPZZLjgGB2Kq1d7zsjUr6TnS 
