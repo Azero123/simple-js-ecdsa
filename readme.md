@@ -2,49 +2,49 @@
 
 this project is intended as an easy to use ecdsa
 
-creating a new wallet
+creating a new identity
 ```
-let wallet = Wallet.new()
-```
-
-opening an existing wallet using a private key
-```
-Wallet.fromKey(<private number>)
+let identity = Identity.new()
 ```
 
-opening a wallet using a wif
+opening an existing identity using a private key
 ```
-Wallet.fromWif(<private wif>)
+Identity.fromKey(<private number>)
 ```
 
-retrievable items in a wallet
+opening a identity using a wif
 ```
-wallet.key
-wallet.sec1Compressed
-wallet.sec1Uncompressed
-wallet.wif
-wallet.address
-wallet.compressAddress
+Identity.fromWif(<private wif>)
+```
+
+retrievable items in a identity
+```
+identity.key
+identity.sec1Compressed
+identity.sec1Uncompressed
+identity.wif
+identity.address
+identity.compressAddress
 ```
 
 signing a message
 ```
-const signature = wallet.sign(message)
+const signature = identity.sign(message)
 ```
 
 verify a signature
 ```
-wallet.verify(message, signature)
+identity.verify(message, signature)
 ```
 
 signing in bip66 format
 ```
-const signature = wallet.bip66Sign(message)
+const signature = identity.bip66Sign(message)
 ```
 
 verify bip66 signature
 ```
-wallet.verifyBip66(message, signature)
+identity.verifyBip66(message, signature)
 ```
 
 # contribute

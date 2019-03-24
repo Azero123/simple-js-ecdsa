@@ -1,7 +1,6 @@
 try {
   const bigInt = require('big-integer')
-  const ecdsa = require('../src/index.js')
-  const Wallet = ecdsa.Wallet
+  const Identity = require('../src/index.js')
   ;(() => {
     const privateToPublic = {
       '7': {
@@ -34,85 +33,92 @@ try {
     }
 
     for (privateKey in privateToPublic) {
-      const wallet = Wallet.fromKey(privateKey)
-      if (privateToPublic[privateKey].pub !== wallet.sec1Compressed) {
-        throw `private key failed to make public ${privateKey} ${privateToPublic[privateKey].pub} ${wallet.address}`
+      const identity = Identity.fromKey(privateKey)
+      if (privateToPublic[privateKey].pub !== identity.sec1Compressed) {
+        throw `private key failed to make public ${privateKey} ${privateToPublic[privateKey].pub} ${identity.address}`
       }
     }
+    console.log('✅ retrieving identity from private key passed')
   })()
 
-  const privateToPublic = {
-    '5HpHagT65TZzG1PH3CSu63k8DbpvD8s5ip4nEB3kEsreAnchuDf':'1EHNa6Q4Jz2uvNExL497mE43ikXhwF6kZm',
-    '5HpHagT65TZzG1PH3CSu63k8DbpvD8s5ip4nEB3kEsreJQmdp3Y':'1KFLggHezq3kiAtpaKMeQPcnoWsXuZHRyn',
-    '5J1F7GHadZG3sCCKHCwg8Jvys9xUbFsjLnGec4H125Ny1V9nR6V':'16UwLL9Risc3QfPqBUvKofHmBQ7wMtjvM',
-    '5HwoXVkHoRM8sL2KmNRS217n1g8mPPBomrY7yehCuXC1115WWsh':'1MsHWS1BnwMc3tLE8G35UXsS58fKipzB7a'
-  }
-  for (const private of Object.keys(privateToPublic)) {
-    let wallet = Wallet.fromWif(private)
-    // console.log('key', wallet.key)
-    // console.log('sec1 (compressed)',wallet.sec1Compressed)
-    // console.log('sec1 (uncompressed)',wallet.sec1Uncompressed)
-    // console.log('wif',wallet.wif)
-    // console.log('address',wallet.address)
-    // console.log('compressAddress',wallet.compressAddress)
-    if (wallet.address !== privateToPublic[private]) {
-      throw 'invalid public key generation '+privateToPublic[private]
+  ;(()=>{
+    const privateToPublic = {
+      '5HpHagT65TZzG1PH3CSu63k8DbpvD8s5ip4nEB3kEsreAnchuDf':'1EHNa6Q4Jz2uvNExL497mE43ikXhwF6kZm',
+      '5HpHagT65TZzG1PH3CSu63k8DbpvD8s5ip4nEB3kEsreJQmdp3Y':'1KFLggHezq3kiAtpaKMeQPcnoWsXuZHRyn',
+      '5J1F7GHadZG3sCCKHCwg8Jvys9xUbFsjLnGec4H125Ny1V9nR6V':'16UwLL9Risc3QfPqBUvKofHmBQ7wMtjvM',
+      '5HwoXVkHoRM8sL2KmNRS217n1g8mPPBomrY7yehCuXC1115WWsh':'1MsHWS1BnwMc3tLE8G35UXsS58fKipzB7a'
     }
-  }
+    for (const private of Object.keys(privateToPublic)) {
+      let identity = Identity.fromWif(private)
+      // console.log('key', identity.key)
+      // console.log('sec1 (compressed)',identity.sec1Compressed)
+      // console.log('sec1 (uncompressed)',identity.sec1Uncompressed)
+      // console.log('wif',identity.wif)
+      // console.log('address',identity.address)
+      // console.log('compressAddress',identity.compressAddress)
+      if (identity.address !== privateToPublic[private]) {
+        throw 'invalid public key generation '+privateToPublic[private]
+      }
+    }
+    console.log('✅ retrieving identity from wif passed')
+  })()
 
   ;(() => {
-    let wallet = Wallet.fromKey('82ef796afbce6e67bcb6bc44d922e5d2e664ebe118c0ed5b6ce3b481a638ec90')
-    const signature = wallet.sign('test', '2900c9abe4a9d00b2a4aa6663d8f4989c8cac35f4fe9b2c5b66e07a3903e1c3')
+    const identity = Identity.fromKey('82ef796afbce6e67bcb6bc44d922e5d2e664ebe118c0ed5b6ce3b481a638ec90')
+    const signature = identity.sign('test', '2900c9abe4a9d00b2a4aa6663d8f4989c8cac35f4fe9b2c5b66e07a3903e1c3')
+    const bip66Sig = identity.bip66Sign('test')
     if (signature.r.toString(16) !== '85a44b824bda975b15ac77a3256c5d6f21c19b0412eb19333844fc2dbd25dbba') {
       throw 'invalid signature r value'
     }
+    // console.log('bip66',bip66.encode(new Buffer(signature.r.toString(16), 'hex'), new Buffer(signature.s.toString(16), 'hex')))
     // if (signature.s.toString(16) !== '79a1e1e6c94d3cc0388d8659cf7e7fbc6d6e03a1a19446258d19b82071b95c7d') {
     //   throw 'invalid signature s value'
     // }
-    if (wallet.verify('test', signature) !== true) {
+    if (identity.verify('test', signature) !== true) {
       throw 'signing or verification failure'
     }
-    if (wallet.verifyBip66('test', wallet.bip66Sign('test')) !== true) {
+    if (identity.verifyBip66('test', bip66Sig) !== true) {
       throw 'bip 66 signing or verification failure'
     }
-    if (wallet.verifyBip66(`${Math.random()}`, wallet.bip66Sign('test')) !== false) {
-      throw 'falsifiable bip 66 wallet verification'
+    if (identity.verifyBip66(`${Math.random()}`, bip66Sig) !== false) {
+      throw 'falsifiable bip 66 identity verification'
     }
-    if (wallet.verify(`${Math.random()}`, signature) !== false) {
+    if (identity.verify(`${Math.random()}`, signature) !== false) {
       throw 'falsifiable verification'
     }
-    if (Wallet.new().verify('test', signature) !== false) {
-      throw 'falsifiable wallet verification'
+    if (Identity.new().verify('test', signature) !== false) {
+      throw 'falsifiable identity verification'
     }
   })()
 
-  let i = 0
-  while (i < 3) {
-    const message = `${Math.random()}`
-    let wallet = Wallet.new()
-    const signature = wallet.sign(message)
-    if (wallet.verify(message, signature) !== true) {
-      throw 'signing or verification failure'
+  ;(()=>{
+    let i = 0
+    while (i < 2) {
+      const message = `${Math.random()}`
+      const identity = Identity.new()
+      const signature = identity.sign(message)
+      const bip66Sig = identity.bip66Sign(message)
+      if (identity.verify(message, signature) !== true) {
+        throw 'signing or verification failure'
+      }
+      if (identity.verifyBip66(message, bip66Sig) !== true) {
+        throw 'bip 66 signing or verification failure'
+      }
+      if (identity.verifyBip66(`${Math.random()}`, bip66Sig) !== false) {
+        throw 'falsifiable bip 66 identity verification'
+      }
+      if (identity.verify(`${Math.random()}`, signature) !== false) {
+        throw 'falsifiable verification'
+      }
+      if (Identity.new().verify(message, signature) !== false) {
+        throw 'falsifiable identity verification'
+      }
+      i++
     }
-    if (wallet.verifyBip66(message, wallet.bip66Sign(message)) !== true) {
-      throw 'bip 66 signing or verification failure'
-    }
-    if (wallet.verifyBip66(`${Math.random()}`, wallet.bip66Sign(message)) !== false) {
-      throw 'falsifiable bip 66 wallet verification'
-    }
-    if (wallet.verify(`${Math.random()}`, signature) !== false) {
-      throw 'falsifiable verification'
-    }
-    if (Wallet.new().verify(message, signature) !== false) {
-      throw 'falsifiable wallet verification'
-    }
-    i++
-  }
-
-
-  console.log('✅ wallet tests passed')
+    console.log('✅ signing and verification passed')
+  })()
 }
 catch (e) {
-  console.log('⚠️ failed to test wallets', e)
+  console.log('⚠️ failed to test identitys', e)
   throw e
 }
