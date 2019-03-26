@@ -65,7 +65,7 @@ try {
 
   ;(() => {
     const identity = Identity.fromKey('82ef796afbce6e67bcb6bc44d922e5d2e664ebe118c0ed5b6ce3b481a638ec90')
-    const signature = identity.sign('test', '2900c9abe4a9d00b2a4aa6663d8f4989c8cac35f4fe9b2c5b66e07a3903e1c3')
+    const signature = identity.sign('test', bigInt('2900c9abe4a9d00b2a4aa6663d8f4989c8cac35f4fe9b2c5b66e07a3903e1c3', 16))
     const bip66Sig = identity.bip66Sign('test')
     if (signature.r.toString(16) !== '85a44b824bda975b15ac77a3256c5d6f21c19b0412eb19333844fc2dbd25dbba') {
       throw 'invalid signature r value'

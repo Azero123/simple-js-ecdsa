@@ -42,7 +42,6 @@ class Identity {
     return wallet
   }
   sign(message, k = this.curve.modSet.random()) {
-    k = bigInt(k, 16)
     const e = bigInt(sha256(message), 16)
     
     const da = bigInt(this.key, 16) // private key
@@ -88,7 +87,7 @@ class Identity {
     const u1 = bigInt(e).multiply(w).mod(this.curve.n)
     const u2 = r.multiply(w).mod(this.curve.n)
     const p = this.curve.add(this.curve.multiply(this.curve.g, u1), this.curve.multiply(this.publicPoint, u2))
-    return p.x == r
+    return p.x.toString(16) == r.toString(16)
   }
 
   verifyBip66(message, signature) {
