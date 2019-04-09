@@ -26,6 +26,6 @@
   "homepage": "https://github.com/Azero123/simple-js-ecdsa#readme",
   "dependencies": {
     "bs58": "^4.0.1",
-    "simple-js-ec-math": "^1.2.1"
+    "simple-js-ec-math": "^1.2.3"
   }
 }
