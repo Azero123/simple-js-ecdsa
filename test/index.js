@@ -35,7 +35,7 @@ try {
     for (privateKey in privateToPublic) {
       const identity = Identity.fromKey(privateKey)
       if (privateToPublic[privateKey].pub !== identity.sec1Compressed) {
-        throw `private key failed to make public ${privateKey} ${privateToPublic[privateKey].pub} ${identity.address}`
+        throw `private key failed to make public ${privateKey} ${privateToPublic[privateKey].pub} ${identity.sec1Compressed}`
       }
     }
     console.log('✅ retrieving identity from private key passed')
@@ -119,6 +119,6 @@ try {
   })()
 }
 catch (e) {
-  console.log('⚠️ failed to test identitys', e)
+  console.log('⚠️ failed to test identities', e)
   throw e
 }

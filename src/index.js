@@ -118,7 +118,7 @@ class Identity {
     if (this._publicPoint) {
       return this._publicPoint
     }
-    return this._publicPoint = this.curve.multiply(this.curve.g, this.key.toString())
+  return this._publicPoint = this.curve.multiply(this.curve.g, bigInt(this.key, 16))
   }
   get sec1Compressed() {
     if (this._sec1Compressed) {
