@@ -117,6 +117,38 @@ try {
     }
     console.log('✅ signing and verification passed')
   })()
+
+  ;(()=>{
+    const message = `message`
+    const identity = Identity.fromKey(bigInt('148172865147316064835531248829175706341327876476269968635560286338'))
+    const signature = identity.sign(message, bigInt('117684982898427616968903898096562672753697490468945332396836429490'))
+    const bip66Sig = identity.bip66Sign(message, bigInt('195824508170618319808973875696324677909297326707645576719203036558'))
+    if (signature.r != 'c71cd3057d59777e31d623c04ce69599a40b6daf345b787f46f863debe029755') {
+      throw 'signature is wrong'
+    }
+    if (signature.s != 'c7234d01d7eb0120f1982b8a7ebcf533d1dc4178a588138724b4c480f3ee7edc') {
+      throw 'signature is wrong'
+    }
+    if (bip66Sig != '304402207371a56bdb0f2e89354bc8b56ee57af530bba1d7d29b3c3ff98ca8360bd888e102202eefc3377d1650e06d52c7dacc75e2ce1319c58eb5555e59ec8256a1af1be0bc') {
+      throw 'signature is wrong'
+    }
+    if (identity.verify(message, signature) !== true) {
+      throw 'signing or verification failure'
+    }
+    if (identity.verifyBip66(message, bip66Sig) !== true) {
+      throw 'bip 66 signing or verification failure'
+    }
+    if (identity.verifyBip66(`${Math.random()}`, bip66Sig) !== false) {
+      throw 'falsifiable bip 66 identity verification'
+    }
+    if (identity.verify(`${Math.random()}`, signature) !== false) {
+      throw 'falsifiable verification'
+    }
+    if (Identity.new().verify(message, signature) !== false) {
+      throw 'falsifiable identity verification'
+    }
+    console.log('✅ signing and verification passed')
+  })()
 }
 catch (e) {
   console.log('⚠️ failed to test identities', e)
