@@ -1,7 +1,8 @@
 const bigInt = require('big-integer')
 const base58 = require('bs58')
 const crypto = require('crypto')
-const secp256k1 = require('./secp256k1.js')
+const secp256k1 = require('simple-js-secp256k1')
+const ModPoint = require('simple-js-ec-math').ModPoint
 
 let hex = { '0': 0, '1': 1, '2': 2, '3': 3, '4': 4, '5': 5, '6': 6, '7': 7, '8': 8, '9': 9, a: 10, b: 11, c: 12, d: 13, e: 14, f: 15 }
 
@@ -25,12 +26,14 @@ class Identity {
   static new(curve = secp256k1) {
     return Identity.fromKey(curve.modSet.random(), curve)
   }
+
   static fromKey(key, curve = secp256k1) {
     const wallet = new Identity()
     wallet.curve = curve
     wallet.key = key
     return wallet
   }
+
   static fromWif(wif, curve = secp256k1) {
     const wallet = new Identity()
     wallet.curve = curve
@@ -41,6 +44,36 @@ class Identity {
     }
     return wallet
   }
+
+  static fromSec1(sec1, curve = secp256k1) {
+    const mode = sec1.substr(0, 2)
+    const x = bigInt(sec1.substr(2, 64), 16)
+    const y = bigInt(sec1.substr(66, 130), 16)
+    /*
+      compressed guide
+      https://crypto.stackexchange.com/questions/8914/ecdsa-compressed-public-key-point-back-to-uncompressed-public-key-point
+      𝑍=𝑌/𝑋
+      𝑍2+𝑍=𝑋+𝑎+𝑏𝑋2
+      𝑌=𝑋𝑍
+      const w = secp256k1.b.divmod(x.modPow(2, secp256k1.p), secp256k1.p)
+      console.log(w)
+      const z2z = x.add(secp256k1.a).add(w)
+      console.log(z2z)
+    */
+    const identity = new Identity()
+    identity.curve = curve
+    identity._publicPoint = new ModPoint(x, y)
+    if (
+      (mode === '04' && sec1.length !== 130) ||
+      ((mode === '03' || mode === '02') && sec1.length !== 66) ||
+      !secp256k1.verify(identity.publicPoint)
+    ) {
+      throw 'invalid address' + (mode === '03' || mode === '02') ? ' compressed addresses not yet supported' : ''
+    }
+    return identity
+    
+  }
+
   sign(message, k = this.curve.modSet.random()) {
     const e = bigInt(sha256(message), 16)
     
@@ -55,6 +88,16 @@ class Identity {
       r: bigInt(r.x).toString(16),
       s: s.toString(16)
     }
+  }
+
+  static validateAddress(address) {
+    if (address.length !== 34) {
+      throw 'invalid address'
+    }
+    address = base58.decode(address).toString('hex')
+    const addressChecksum = binSha256(binSha256(address.substr(0,42))).substr(0, 8)
+    const checksum = address.substr(42,50)
+    return addressChecksum === checksum
   }
 
   bip66Sign(message, k = this.curve.modSet.random()) {
@@ -99,13 +142,7 @@ class Identity {
       s: signature.slice(6 + lr).toString('hex')
     })
   }
-  
-  static fromAddress(address, curve = secp256k1) {
-    const wallet = new Identity()
-    wallet.curve = curve
-    wallet._address = address
-    return wallet
-  }
+
   get wif() {
     if (this._wif) {
       return this._wif
@@ -114,36 +151,33 @@ class Identity {
     const checksum = binSha256(binSha256(formatted)).substr(0, 8)
     return this._wif = base58.encode(Buffer.from(`${formatted}${checksum}`, 'hex'))
   }
+
   get publicPoint() {
     if (this._publicPoint) {
       return this._publicPoint
     }
   return this._publicPoint = this.curve.multiply(this.curve.g, bigInt(this.key, 16))
   }
+
   get sec1Compressed() {
-    if (this._sec1Compressed) {
-      return this._sec1Compressed
-    }
-    let xStr = bigInt(this.publicPoint.x).toString(16)
-    while (xStr.length < 64) {
-      xStr = '0' + xStr
-    }
-    return this._sec1Compressed = `${bigInt(this.publicPoint.y).isOdd() ? '03' : '02'}${xStr}`
+    return this._sec1Compressed || (this._sec1Compressed = 
+      `${
+        bigInt(this.publicPoint.y).isOdd() ? '03' : '02'
+      }${
+        bigInt(this.publicPoint.x).toString(16).padStart(64, '0')
+      }`
+    )
   }
   get sec1Uncompressed() {
-    if (this._sec1Uncompressed) {
-      return this._sec1Uncompressed
-    }
-    let yStr = bigInt(this.publicPoint.y).toString(16)
-    while (yStr.length < 64) {
-      yStr = '0' + yStr
-    }
-    let xStr = bigInt(this.publicPoint.x).toString(16)
-    while (xStr.length < 64) {
-      xStr = '0' + xStr
-    }
-    return this._sec1Uncompressed = `04${xStr}${yStr}`
+    return this._sec1Uncompressed || (this._sec1Uncompressed = 
+      `04${
+        bigInt(this.publicPoint.x).toString(16).padStart(64, '0')
+      }${
+        bigInt(this.publicPoint.y).toString(16).padStart(64, '0')
+      }`
+    )
   }
+
   get address() {
     if (this._address) {
       return this._address
@@ -152,6 +186,7 @@ class Identity {
     const checksum = binSha256(binSha256(formatted)).substr(0, 8)
     return this._address = base58.encode(Buffer.from(`${formatted}${checksum}`, 'hex'))
   }
+
   get compressAddress() {
     if (this._compressAddress) {
       return this._compressAddress

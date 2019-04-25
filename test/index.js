@@ -50,12 +50,6 @@ try {
     }
     for (const private of Object.keys(privateToPublic)) {
       let identity = Identity.fromWif(private)
-      // console.log('key', identity.key)
-      // console.log('sec1 (compressed)',identity.sec1Compressed)
-      // console.log('sec1 (uncompressed)',identity.sec1Uncompressed)
-      // console.log('wif',identity.wif)
-      // console.log('address',identity.address)
-      // console.log('compressAddress',identity.compressAddress)
       if (identity.address !== privateToPublic[private]) {
         throw 'invalid public key generation '+privateToPublic[private]
       }
@@ -148,6 +142,107 @@ try {
       throw 'falsifiable identity verification'
     }
     console.log('✅ signing and verification passed')
+  })()
+
+  ;(()=>{
+    const Identity = require('../src/index.js')
+    const identity = Identity.fromWif('5JJQHQSZP9z5wHjerG8QL3mPXVpCgrWR8dw1TfiJHhjR5DieHTX')
+    if (identity.sec1Compressed !== '02d2cb1636c8800502112f346f10a62e256d42b5ea46b3a55e2ff4607167afd2fd') {
+      throw 'invalid sec1 (compressed)'
+    }
+    if (identity.sec1Uncompressed !== '04d2cb1636c8800502112f346f10a62e256d42b5ea46b3a55e2ff4607167afd2fdbdb2bfd6280aca239796dc4eb6283ad2d31a5ef417620efb095887c7dc56a5ba') {
+      throw 'invalid sec1 (uncompressed)'
+    }
+    if (identity.key !== '3fd6fd76821d9b1191cb24894be0f760b8d08fe837347e3d940b53a49f9a884e') {
+      throw 'invalid private key'
+    }
+    if (identity.wif !== '5JJQHQSZP9z5wHjerG8QL3mPXVpCgrWR8dw1TfiJHhjR5DieHTX') {
+      throw 'invalid wif'
+    }
+    if (identity.address !== '1C4cseQKY442fKKHP8LvrakkBdZRJYWGmh') {
+      throw 'invalid address (uncompressed)'
+    }
+    if (identity.compressAddress !== '1AHbAE2SyMp2hAPDZiCo1RsdZyAFqPsyRg') {
+      throw 'invalid address (compressed)'
+    }
+
+    if (!Identity.validateAddress(identity.compressAddress)) {
+      throw 'unable to validate valid address (compressed)'
+    }
+    if (!Identity.validateAddress(identity.address)) {
+      throw 'unable to validate valid address (uncompressed)'
+    }
+
+    let threwError = false
+    try {
+      const invalidAddress = identity.compressAddress
+      invalidAddress[49] = '3'
+      if (Identity.validateAddress(invalidAddress)) {
+        throw 'unable to invalidate invalid address (compressed)'
+      } 
+      if (Identity.validateAddress(identity.compressAddress.substr(0, 49))) {
+        throw 'unable to invalidate invalid address (compressed)'
+      }
+    }
+    catch (e) {
+      threwError = true
+    }
+    if (!threwError) {
+      throw 'should have thrown an error on invalid address'
+    } 
+
+    threwError = false
+    try {
+      const invalidAddress = identity.address
+      invalidAddress[49] = '3'
+      if (Identity.validateAddress(invalidAddress)) {
+        throw 'unable to invalidate invalid address (uncompressed)'
+      } 
+      if (Identity.validateAddress(identity.address.substr(0, 49))) {
+        throw 'unable to invalidate invalid address (uncompressed)'
+      } 
+    }
+    catch (e) {
+      threwError = true
+    }
+    if (!threwError) {
+      throw 'should have thrown an error on invalid address'
+    } 
+
+    // threwError = false
+    // try { Identity.fromSec1(identity.sec1Compressed) } catch (e) { threwError = true; console.error(e) }
+    // if (threwError) {
+    //   throw 'should not have thrown an error when making an identity from sec1 format (compressed)'
+    // } 
+
+    threwError = false
+    try { Identity.fromSec1(identity.sec1Uncompressed) } catch (e) { threwError = true }
+    if (threwError) {
+      throw 'should not have thrown an error when making an identity from sec1 format (uncompressed)'
+    } 
+
+    threwError = false
+    try {
+      const sec1 = identity.sec1Compressed.replace('8800', '1111')
+      sec1[8] = '3'
+      Identity.fromSec1(sec1)
+    } catch (e) { threwError = true; }
+    if (!threwError) {
+      throw 'should have thrown an error when provided a bad sec1 point (compressed)'
+    } 
+
+    threwError = false
+    try {
+      const sec1 = identity.sec1Uncompressed.replace('8800', '1111')
+      Identity.fromSec1(sec1)
+    } catch (e) { threwError = true }
+    if (!threwError) {
+      throw 'should have thrown an error when provided a bad sec1 point (uncompressed)'
+    } 
+
+
+
+    console.log('✅ formats passed')
   })()
 }
 catch (e) {

@@ -17,6 +17,11 @@ opening a identity using a wif
 Identity.fromWif(<private wif>)
 ```
 
+opening a identity using sec1
+```
+Identity.fromSec1(<private wif>)
+```
+
 retrievable items in a identity
 ```
 identity.key
@@ -29,22 +34,27 @@ identity.compressAddress
 
 signing a message
 ```
-const signature = identity.sign(message)
+const signature = identity.sign(<message>)
 ```
 
 verify a signature
 ```
-identity.verify(message, signature)
+identity.verify(<message>, <signature>)
 ```
 
 signing in bip66 format
 ```
-const signature = identity.bip66Sign(message)
+const signature = identity.bip66Sign(<message>)
 ```
 
 verify bip66 signature
 ```
-identity.verifyBip66(message, signature)
+identity.verifyBip66(<message>, <signature>)
+```
+
+verify address
+```
+identity.validateAddress(<address>)
 ```
 
 # contribute
