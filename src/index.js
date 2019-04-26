@@ -48,24 +48,21 @@ class Identity {
   static fromSec1(sec1, curve = secp256k1) {
     const mode = sec1.substr(0, 2)
     const x = bigInt(sec1.substr(2, 64), 16)
-    const y = bigInt(sec1.substr(66, 130), 16)
-    /*
-      compressed guide
-      https://crypto.stackexchange.com/questions/8914/ecdsa-compressed-public-key-point-back-to-uncompressed-public-key-point
-      𝑍=𝑌/𝑋
-      𝑍2+𝑍=𝑋+𝑎+𝑏𝑋2
-      𝑌=𝑋𝑍
-      const w = secp256k1.b.divmod(x.modPow(2, secp256k1.p), secp256k1.p)
-      console.log(w)
-      const z2z = x.add(secp256k1.a).add(w)
-      console.log(z2z)
-    */
+    let y = bigInt(sec1.substr(66, 130), 16)
+    
+    const compressed = (mode === '03' || mode === '02')
+    if (compressed) {
+      const y2 = secp256k1.modSet.add(secp256k1.modSet.power(x, 3), secp256k1.b)
+      y = secp256k1.modSet.squareRoots(y2)[mode === '03' ? 1 : 0]
+    }
+    
     const identity = new Identity()
     identity.curve = curve
     identity._publicPoint = new ModPoint(x, y)
     if (
       (mode === '04' && sec1.length !== 130) ||
-      ((mode === '03' || mode === '02') && sec1.length !== 66) ||
+      (compressed && sec1.length !== 66) ||
+      (mode !== '04' && mode !== '03' && mode !== '02') ||
       !secp256k1.verify(identity.publicPoint)
     ) {
       throw 'invalid address' + (mode === '03' || mode === '02') ? ' compressed addresses not yet supported' : ''

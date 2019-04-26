@@ -145,7 +145,6 @@ try {
   })()
 
   ;(()=>{
-    const Identity = require('../src/index.js')
     const identity = Identity.fromWif('5JJQHQSZP9z5wHjerG8QL3mPXVpCgrWR8dw1TfiJHhjR5DieHTX')
     if (identity.sec1Compressed !== '02d2cb1636c8800502112f346f10a62e256d42b5ea46b3a55e2ff4607167afd2fd') {
       throw 'invalid sec1 (compressed)'
@@ -209,26 +208,16 @@ try {
       throw 'should have thrown an error on invalid address'
     } 
 
-    // threwError = false
-    // try { Identity.fromSec1(identity.sec1Compressed) } catch (e) { threwError = true; console.error(e) }
-    // if (threwError) {
-    //   throw 'should not have thrown an error when making an identity from sec1 format (compressed)'
-    // } 
+    threwError = false
+    try { Identity.fromSec1(identity.sec1Compressed) } catch (e) { threwError = true; console.error(e) }
+    if (threwError) {
+      throw 'should not have thrown an error when making an identity from sec1 format (compressed)'
+    } 
 
     threwError = false
     try { Identity.fromSec1(identity.sec1Uncompressed) } catch (e) { threwError = true }
     if (threwError) {
       throw 'should not have thrown an error when making an identity from sec1 format (uncompressed)'
-    } 
-
-    threwError = false
-    try {
-      const sec1 = identity.sec1Compressed.replace('8800', '1111')
-      sec1[8] = '3'
-      Identity.fromSec1(sec1)
-    } catch (e) { threwError = true; }
-    if (!threwError) {
-      throw 'should have thrown an error when provided a bad sec1 point (compressed)'
     } 
 
     threwError = false
@@ -240,8 +229,14 @@ try {
       throw 'should have thrown an error when provided a bad sec1 point (uncompressed)'
     } 
 
-
-
+    threwError = false
+    try {
+      const sec1 = identity.sec1Uncompressed.replace('04', '05')
+      Identity.fromSec1(sec1)
+    } catch (e) { threwError = true; }
+    if (!threwError) {
+      throw 'should have thrown an error when provided a bad sec1 format'
+    } 
     console.log('✅ formats passed')
   })()
 }
