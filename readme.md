@@ -57,6 +57,11 @@ verify address
 identity.validateAddress(<address>)
 ```
 
+get public point
+```
+identity.publicPoint
+```
+
 # contribute
 
 bitcoin address: 1KKiniL7QnMPZZLjgGB2Kq1d7zsjUr6TnS 
