@@ -4,22 +4,29 @@ this project is intended as an easy to use ecdsa
 
 creating a new identity
 ```
-let identity = Identity.new()
+const identity = Identity.new()
+```
+if you would like to use a curve besides secp256k1
+```
+const ECMath = require('simple-js-ec-math')
+const g = new ECMath.ModPoint(x,y)
+const curve = new ECMath.Curve(<a>, <b>, <n>, <p>, g, <preprocessing>)
+const identity = Identity.new(curve)
 ```
 
 opening an existing identity using a private key
 ```
-Identity.fromKey(<private number>)
+Identity.fromKey(<private number>, <curve?>)
 ```
 
 opening a identity using a wif
 ```
-Identity.fromWif(<private wif>)
+Identity.fromWif(<private wif>, <curve?>)
 ```
 
 opening a identity using sec1
 ```
-Identity.fromSec1(<private wif>)
+Identity.fromSec1(<private wif>, <curve?>)
 ```
 
 retrievable items in a identity

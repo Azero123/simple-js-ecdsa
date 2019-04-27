@@ -1,6 +1,6 @@
 {
   "name": "simple-js-ecdsa",
-  "version": "1.5.2",
+  "version": "1.5.3",
   "description": "easy and light weight ecdsa implementation",
   "main": "./src/index.js",
   "scripts": {
