@@ -51,7 +51,7 @@ identity.verify(<message>, <signature>)
 
 signing in bip66 format
 ```
-const signature = identity.bip66Sign(<message>)
+const signature = identity.signBip66(<message>)
 ```
 
 verify bip66 signature

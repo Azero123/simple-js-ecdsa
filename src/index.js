@@ -97,10 +97,12 @@ class Identity {
     return addressChecksum === checksum
   }
 
-  bip66Sign(message, k = this.curve.modSet.random()) {
+  signBip66(message, k = this.curve.modSet.random()) {
     let signature = this.sign(message, k)
-    const r = Buffer.from(signature.r, 'hex')
-    const s = Buffer.from(signature.s, 'hex')
+    const arrayR = bigInt(signature.r, 16).toArray(256).value
+    const arrayS = bigInt(signature.s, 16).toArray(256).value
+    const r = Buffer.from(arrayR)
+    const s = Buffer.from(arrayS)
     const rl = r.length
     const sl = s.length
     signature = Buffer.allocUnsafe(6 + rl + sl)
@@ -112,11 +114,7 @@ class Identity {
     signature[4+rl] = 0x02
     signature[5+rl] = sl
     s.copy(signature, rl + 6)
-    if (this.verifyBip66(message, signature)) {
-      return signature.toString('hex')
-    }
-    console.warn('⚠️ k value was unusable, making new k. this will be fixed in a later version')
-    return this.bip66Sign(message)
+    return signature
   }
 
   verify(message, signature) {
