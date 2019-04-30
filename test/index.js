@@ -1,10 +1,3 @@
-  // const bigInt = require('big-integer')
-  // const Identity = require('../src/index.js')
-
-  // const identity = Identity.new()
-  // console.log(identity.key.toString(16), identity.address)
-  // console.log(identity.signBip66('hi'))
-
 try {
   const bigInt = require('big-integer')
   const Identity = require('../src/index.js')

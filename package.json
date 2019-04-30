@@ -1,6 +1,6 @@
 {
   "name": "simple-js-ecdsa",
-  "version": "1.6.1",
+  "version": "1.6.2",
   "description": "easy and light weight ecdsa implementation",
   "main": "./src/index.js",
   "scripts": {
@@ -16,7 +16,8 @@
     "elliptic",
     "cryptography",
     "signature",
-    "ec"
+    "ec",
+    "segwit"
   ],
   "author": "Azero123",
   "license": "MIT",
