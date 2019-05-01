@@ -52,8 +52,7 @@ class Identity {
     
     const compressed = (mode === '03' || mode === '02')
     if (compressed) {
-      const y2 = secp256k1.modSet.add(secp256k1.modSet.power(x, 3), secp256k1.b)
-      y = secp256k1.modSet.squareRoots(y2)[mode === '03' ? 1 : 0]
+      y = secp256k1.xToY(x, mode === '03')
     }
     
     const identity = new Identity()
