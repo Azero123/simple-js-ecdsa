@@ -239,8 +239,19 @@ try {
     } 
     console.log('✅ formats passed')
   })()
+
+  ;(() => {
+    const identityA = Identity.fromKey(bigInt('5'))
+    const identityB = Identity.fromKey(bigInt('10'))
+    if (identityA.keyExchange(identityB) !== 'da4f08dff55723182c3ccffeef3ecc92e30642246fe97c400906d471da24b54e') {
+      throw 'failed to perform diffie-hellman key exchange'
+    }
+    if (identityB.keyExchange(identityA) !== 'da4f08dff55723182c3ccffeef3ecc92e30642246fe97c400906d471da24b54e') {
+      throw 'failed to perform diffie-hellman key exchange'
+    }
+  })()
 }
 catch (e) {
-  console.log('⚠️ failed to test identities. ', e)
+  console.log('⚠️ failed to test identities', e)
   throw e
 }

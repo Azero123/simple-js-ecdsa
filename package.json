@@ -1,6 +1,6 @@
 {
   "name": "simple-js-ecdsa",
-  "version": "1.6.3",
+  "version": "1.7.1",
   "description": "easy and light weight ecdsa implementation",
   "main": "./src/index.js",
   "scripts": {
@@ -17,7 +17,11 @@
     "cryptography",
     "signature",
     "ec",
-    "segwit"
+    "segwit",
+    "diffie",
+    "hellman",
+    "diffiehellman",
+    "diffie-hellman"
   ],
   "author": "Azero123",
   "license": "MIT",
@@ -27,7 +31,7 @@
   "homepage": "https://github.com/Azero123/simple-js-ecdsa#readme",
   "dependencies": {
     "bs58": "^4.0.1",
-    "simple-js-ec-math": "^1.5.0",
+    "simple-js-ec-math": "^1.5.1",
     "simple-js-secp256k1": "github:Azero123/simple-js-secp256k1#master",
     "simple-js-sha2-256": "^1.0.2"
   }

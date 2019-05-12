@@ -67,7 +67,13 @@ class Identity {
       throw 'invalid address' + (mode === '03' || mode === '02') ? ' compressed addresses not yet supported' : ''
     }
     return identity
-    
+  }
+
+  static fromPublicPoint(publicPoint, curve = secp256k1) {
+    const wallet = new Identity()
+    wallet.curve = curve
+    wallet._publicPoint = publicPoint
+    return wallet
   }
 
   sign(message, k = this.curve.modSet.random()) {
@@ -130,11 +136,25 @@ class Identity {
   verifyBip66(message, signature) {
     signature = Buffer.from(signature, 'hex')
     const lr = signature[3]
-
     return this.verify(message, {
       r: signature.slice(4, 4 + lr).toString('hex'),
       s: signature.slice(6 + lr).toString('hex')
     })
+  }
+
+  keyExchange(identity) {
+    const pub = this.diffieHellman(identity)
+    const sharedIdentity = Identity.fromPublicPoint(pub, this.curve)
+    const tempSecretPublicKey = sharedIdentity.publicPoint.toJSON()
+    const sharedKey = this.curve.modSet.mod(bigInt(tempSecretPublicKey.x + tempSecretPublicKey.y, 16))
+    return sharedKey.toString(16)
+  }
+
+  diffieHellman(identity) {
+    if (this.key) {
+      return this.curve.multiply(identity.publicPoint, bigInt(this.key, 16))
+    }
+    throw 'diffie-hellman key exchanges requires a private key instantiated identity'
   }
 
   get wif() {
@@ -162,6 +182,7 @@ class Identity {
       }`
     )
   }
+
   get sec1Uncompressed() {
     return this._sec1Uncompressed || (this._sec1Uncompressed = 
       `04${
