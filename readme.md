@@ -69,6 +69,11 @@ get public point
 identity.publicPoint
 ```
 
+key exchange
+```
+<identity>.keyExchange(<identity>)
+```
+
 # contribute
 
 bitcoin address: 1KKiniL7QnMPZZLjgGB2Kq1d7zsjUr6TnS 

@@ -28,17 +28,25 @@ class Identity {
   }
 
   static fromKey(key, curve = secp256k1) {
+    let _key
+    if (key instanceof bigInt) {
+      _key = key
+      key = key.toString(16)
+    }
+    else {
+      _key = bigInt(key, 16)
+    }
     const wallet = new Identity()
     wallet.curve = curve
     wallet.key = key
+    wallet._key = _key
     return wallet
   }
 
   static fromWif(wif, curve = secp256k1) {
-    const wallet = new Identity()
-    wallet.curve = curve
     const hexWif = base58.decode(wif).toString('hex')
-    wallet.key = hexWif.substring(2, hexWif.length - 8)
+    const key = hexWif.substring(2, hexWif.length - 8)
+    const wallet = Identity.fromKey(key, curve)
     if (wallet.wif !== wif) {
       throw 'invalid wif'
     }
@@ -77,13 +85,14 @@ class Identity {
   }
 
   sign(message, k = this.curve.modSet.random()) {
+    if (!(k instanceof bigInt)) {
+      k = bigInt(k, 16)
+    }
     const e = bigInt(sha256(message), 16)
-    
-    const da = bigInt(this.key, 16) // private key
-
+ 
     const r = this.curve.multiply(this.curve.g, k)
 
-    const s1 = da.multiply(r.x).add(e)
+    const s1 = this._key.multiply(r.x).add(e)
     const s = s1.multiply(k.modInv(this.curve.n)).mod(this.curve.n)
 
     return {
@@ -146,13 +155,12 @@ class Identity {
     const pub = this.diffieHellman(identity)
     const sharedIdentity = Identity.fromPublicPoint(pub, this.curve)
     const tempSecretPublicKey = sharedIdentity.publicPoint.toJSON()
-    const sharedKey = this.curve.modSet.mod(bigInt(tempSecretPublicKey.x + tempSecretPublicKey.y, 16))
-    return sharedKey.toString(16)
+    return tempSecretPublicKey.x
   }
 
   diffieHellman(identity) {
     if (this.key) {
-      return this.curve.multiply(identity.publicPoint, bigInt(this.key, 16))
+      return this.curve.multiply(identity.publicPoint, this._key)
     }
     throw 'diffie-hellman key exchanges requires a private key instantiated identity'
   }
@@ -170,7 +178,7 @@ class Identity {
     if (this._publicPoint) {
       return this._publicPoint
     }
-    return this._publicPoint = this.curve.multiply(this.curve.g, bigInt(this.key, 16))
+    return this._publicPoint = this.curve.multiply(this.curve.g, this._key)
   }
 
   get sec1Compressed() {
