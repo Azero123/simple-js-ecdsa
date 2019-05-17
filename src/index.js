@@ -54,22 +54,10 @@ class Identity {
   }
 
   static fromSec1(sec1, curve = secp256k1) {
-    const mode = sec1.substr(0, 2)
-    const x = bigInt(sec1.substr(2, 64), 16)
-    let y = bigInt(sec1.substr(66, 130), 16)
-    
-    const compressed = (mode === '03' || mode === '02')
-    if (compressed) {
-      y = secp256k1.xToY(x, mode === '03')
-    }
-    
     const identity = new Identity()
     identity.curve = curve
-    identity._publicPoint = new ModPoint(x, y)
+    identity._publicPoint = ModPoint.fromSec1(sec1, curve)
     if (
-      (mode === '04' && sec1.length !== 130) ||
-      (compressed && sec1.length !== 66) ||
-      (mode !== '04' && mode !== '03' && mode !== '02') ||
       !secp256k1.verify(identity.publicPoint)
     ) {
       throw 'invalid address' + (mode === '03' || mode === '02') ? ' compressed addresses not yet supported' : ''
@@ -182,23 +170,11 @@ class Identity {
   }
 
   get sec1Compressed() {
-    return this._sec1Compressed || (this._sec1Compressed = 
-      `${
-        bigInt(this.publicPoint.y).isOdd() ? '03' : '02'
-      }${
-        bigInt(this.publicPoint.x).toString(16).padStart(64, '0')
-      }`
-    )
+    return this.publicPoint.sec1Compressed
   }
 
   get sec1Uncompressed() {
-    return this._sec1Uncompressed || (this._sec1Uncompressed = 
-      `04${
-        bigInt(this.publicPoint.x).toString(16).padStart(64, '0')
-      }${
-        bigInt(this.publicPoint.y).toString(16).padStart(64, '0')
-      }`
-    )
+    return this.publicPoint.sec1Uncompressed
   }
 
   get address() {
