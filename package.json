@@ -31,8 +31,8 @@
   "homepage": "https://github.com/Azero123/simple-js-ecdsa#readme",
   "dependencies": {
     "bs58": "^4.0.1",
-    "simple-js-ec-math": "^1.7.1",
-    "simple-js-secp256k1": "github:Azero123/simple-js-secp256k1#master",
-    "simple-js-sha2-256": "^1.0.2"
+    "simple-js-ec-math": "github:Azero123/simple-js-ec-math#browser-support",
+    "simple-js-secp256k1": "github:Azero123/simple-js-secp256k1#native-bigint",
+    "simple-js-sha2-256": "^1.0.6"
   }
 }
