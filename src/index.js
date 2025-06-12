@@ -1,4 +1,3 @@
-const bigInt = require('big-integer')
 const base58 = require('bs58')
 const crypto = require('crypto')
 const secp256k1 = require('simple-js-secp256k1')
@@ -8,6 +7,41 @@ let hex = { '0': 0, '1': 1, '2': 2, '3': 3, '4': 4, '5': 5, '6': 6, '7': 7, '8':
 
 const sha256 = require('simple-js-sha2-256')
 const ripemd160 = data => crypto.createHash('ripemd160').update(data, 'hex').digest('hex').toString()
+
+function modInv(a, n) {
+  if (typeof a !== 'bigint') {
+    throw new Error(`modInv: a is not BigInt: ${a} (type: ${typeof a})`)
+  }
+  if (typeof n !== 'bigint') {
+    throw new Error(`modInv: n is not BigInt: ${n} (type: ${typeof n})`)
+  }
+  let t = 0n, newT = 1n
+  let r = n, newR = a % n
+
+  while (newR !== 0n) {
+    const quotient = r / newR
+    ;[t, newT] = [newT, t - quotient * newT]
+    ;[r, newR] = [newR, r - quotient * newR]
+  }
+
+  if (r > 1n) throw new Error('a is not invertible')
+  if (t < 0n) t += n
+
+  return t
+}
+
+function bigintToBaseArray(value, base = 256) {
+  const result = [];
+  const bigBase = BigInt(base);
+  let num = value;
+
+  while (num > 0) {
+    result.unshift(Number(num % bigBase));
+    num = num / bigBase;
+  }
+
+  return result;
+}
 
 const hexStringToBinaryString = s => {
   s = s.toLowerCase()
@@ -28,14 +62,7 @@ class Identity {
   }
 
   static fromKey(key, curve = secp256k1) {
-    let _key
-    if (key instanceof bigInt) {
-      _key = key
-      key = key.toString(16)
-    }
-    else {
-      _key = bigInt(key, 16)
-    }
+    let _key = BigInt('0x' + key)
     const wallet = new Identity()
     wallet.curve = curve
     wallet.key = key
@@ -71,20 +98,24 @@ class Identity {
     wallet._publicPoint = publicPoint
     return wallet
   }
-
+  
   sign(message, k = this.curve.modSet.random()) {
-    if (!(k instanceof bigInt)) {
-      k = bigInt(k, 16)
+    if (typeof k === 'string') {
+      k = BigInt('0x' + k)
+    } else if (typeof k === 'number') {
+      k = BigInt(k)
     }
-    const e = bigInt(sha256(message), 16)
- 
+    if (typeof k !== 'bigint') {
+      throw new Error(`k is not BigInt: ${k} (type: ${typeof k})`)
+    }
+    const e = BigInt('0x' + sha256(message))
     const r = this.curve.multiply(this.curve.g, k)
 
-    const s1 = this._key.multiply(r.x).add(e)
-    const s = s1.multiply(k.modInv(this.curve.n)).mod(this.curve.n)
+    const s1 = (this._key * r.x) + e
+    const s = (s1 * modInv(BigInt('0x'+k.toString(16)), this.curve.n)) % this.curve.n
 
     return {
-      r: bigInt(r.x).toString(16),
+      r: r.x.toString(16),
       s: s.toString(16)
     }
   }
@@ -101,8 +132,8 @@ class Identity {
 
   signBip66(message, k = this.curve.modSet.random()) {
     let signature = this.sign(message, k)
-    const arrayR = bigInt(signature.r, 16).toArray(256).value
-    const arrayS = bigInt(signature.s, 16).toArray(256).value
+    const arrayR = bigintToBaseArray(BigInt('0x' + signature.r))
+    const arrayS = bigintToBaseArray(BigInt('0x' + signature.s))
     const r = Buffer.from(arrayR)
     const s = Buffer.from(arrayS)
     const rl = r.length
@@ -116,16 +147,16 @@ class Identity {
     signature[4+rl] = 0x02
     signature[5+rl] = sl
     s.copy(signature, rl + 6)
-    return signature
+    return signature.toString('hex')
   }
 
   verify(message, signature) {
-    const e = bigInt(sha256(message), 16)
-    const r = bigInt(signature.r, 16)
-    const s = bigInt(signature.s, 16)
-    const w = bigInt(s).modInv(this.curve.n)
-    const u1 = bigInt(e).multiply(w).mod(this.curve.n)
-    const u2 = r.multiply(w).mod(this.curve.n)
+    const e = BigInt('0x' + sha256(message))
+    const r = BigInt('0x' + signature.r)
+    const s = BigInt('0x' + signature.s)
+    const w = modInv(s, this.curve.n)
+    const u1 = e * w % this.curve.n
+    const u2 = r * w % this.curve.n
     const p = this.curve.add(this.curve.multiply(this.curve.g, u1), this.curve.multiply(this.publicPoint, u2))
     return p.x.toString(16) == r.toString(16)
   }
