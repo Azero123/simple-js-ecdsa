@@ -1,6 +1,6 @@
 {
   "name": "simple-js-ecdsa",
-  "version": "1.8.1",
+  "version": "1.9.0",
   "description": "easy and light weight ecdsa implementation",
   "main": "./src/index.js",
   "scripts": {
@@ -32,6 +32,7 @@
   "dependencies": {
     "bs58": "^4.0.1",
     "simple-js-ec-math": "github:Azero123/simple-js-ec-math#browser-support",
+    "simple-js-ripemd160": "^1.0.0",
     "simple-js-secp256k1": "github:Azero123/simple-js-secp256k1#native-bigint",
     "simple-js-sha2-256": "^1.0.6"
   }

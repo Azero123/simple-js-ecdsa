@@ -1,12 +1,11 @@
 const base58 = require('bs58')
-const crypto = require('crypto')
 const secp256k1 = require('simple-js-secp256k1')
 const ModPoint = require('simple-js-ec-math').ModPoint
+const ripemd160 = require('simple-js-ripemd160')
 
 let hex = { '0': 0, '1': 1, '2': 2, '3': 3, '4': 4, '5': 5, '6': 6, '7': 7, '8': 8, '9': 9, a: 10, b: 11, c: 12, d: 13, e: 14, f: 15 }
 
 const sha256 = require('simple-js-sha2-256')
-const ripemd160 = data => crypto.createHash('ripemd160').update(data, 'hex').digest('hex').toString()
 
 function modInv(a, n) {
   if (typeof a !== 'bigint') {
